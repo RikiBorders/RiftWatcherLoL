@@ -1,0 +1,13 @@
+[project]
+name = "riftwatcher"
+version = "0.1.0"
+description = "Rift Watcher 2.0 skeleton for long-term League of Legends player analytics."
+readme = "README.md"
+requires-python = ">=3.10"
+
+dependencies = [
+	"supabase"
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
