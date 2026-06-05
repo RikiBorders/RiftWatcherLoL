@@ -6,7 +6,7 @@ from rift_watcher.client.riot_api_client import RiotAPIClient
 
 
 def test_fetch_player_profile_returns_expected_profile(monkeypatch):
-    riot_client = RiotAPIClient(api_key="test-key", region="EUW")
+    riot_client = RiotAPIClient(region="EUW")
 
     def fake_get(url, headers, timeout):
         class FakeResponse:
@@ -49,7 +49,7 @@ def test_fetch_player_profile_returns_expected_profile(monkeypatch):
 
 
 def test_fetch_player_profile_reflects_region_and_summoner_name(monkeypatch):
-    riot_client = RiotAPIClient(api_key="test-key", region="KR")
+    riot_client = RiotAPIClient(region="KR")
 
     def fake_get(url, headers, timeout):
         class FakeResponse:

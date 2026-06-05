@@ -12,9 +12,9 @@ from ..types import RiotMatchData, RiotPlayerProfile
 class RiotAPIClient:
     """Handles requests to the Riot API and validates responses."""
 
-    def __init__(self, api_key: str, region: str, database_client: DatabaseClient | None = None):
+    def __init__(self, region: str, database_client: DatabaseClient | None = None):
         load_dotenv()
-        self.api_key = api_key or os.getenv('RIOT_API_KEY')
+        self.api_key = os.getenv('RIOT_API_KEY')
         self.region = region
         self.database_client = database_client
 

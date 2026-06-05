@@ -23,11 +23,11 @@ class Invoker:
         return self.api.get_player_overview(summoner_name, region)
 
 
-riot_client = RiotAPIClient(api_key="YOUR_API_KEY", region="NA")
+riot_client = RiotAPIClient(region="NA")
 riot_adapter = RiotAdapter(database_client=None, riot_client=riot_client)
 player_facade = PlayerFacade(riot_adapter, stat_calculator=...)
 
 api = RiftWatcherAPI(player_facade)
 invoker = Invoker(api)
-overview = invoker.player_overview("player123", "NA")
+overview = invoker.player_overview("Rik Astley", "NA")
 print(overview)
