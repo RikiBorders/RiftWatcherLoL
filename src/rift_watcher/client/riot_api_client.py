@@ -8,7 +8,7 @@ import requests
 from dotenv import load_dotenv
 
 from .database_client import DatabaseClient
-from ..types import RiotMatchData, RiotPlayerProfile
+from ..type.types import RiotMatchData, RiotPlayerProfile
 
 class RiotAPIClient:
     """Handles requests to the Riot API and validates responses."""

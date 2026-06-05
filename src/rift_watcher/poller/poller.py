@@ -8,7 +8,7 @@ from typing import Any
 from ..client.riot_api_client import RiotAPIClient
 from ..client.database_client import DatabaseClient
 from ..adapter.riot_adapter import RiotAdapter
-from ..types import InternalPlayerProfile
+from ..type.types import InternalPlayerProfile
 
 class Poller:
     """Regularly polls the Riot API and updates stored player data."""

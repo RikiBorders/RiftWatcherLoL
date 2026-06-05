@@ -9,7 +9,7 @@ from typing import Any
 from rift_watcher.api.rift_watcher_api import RiftWatcherAPI
 from rift_watcher.client.riot_api_client import RiotAPIClient
 from rift_watcher.adapter.riot_adapter import RiotAdapter
-from rift_watcher.player_facade import PlayerFacade
+from rift_watcher.facade.player_facade import PlayerFacade
 from rift_watcher.api.rift_watcher_api import RiftWatcherAPI
 
 class Invoker:

@@ -2,7 +2,7 @@
 
 from ..client.riot_api_client import RiotAPIClient
 from ..client.database_client import DatabaseClient
-from ..types import InternalMatchRecord, InternalPlayerProfile, RiotMatchData, RiotPlayerProfile
+from ..type.types import InternalMatchRecord, InternalPlayerProfile, RiotMatchData, RiotPlayerProfile
 
 class RiotAdapter:
     """Translates Riot API and database responses into internal models."""

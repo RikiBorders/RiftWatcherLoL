@@ -3,9 +3,9 @@
 from statistics import mean
 from typing import List
 
-from .client.database_client import DatabaseClient
-from .adapter.riot_adapter import RiotAdapter
-from .types import LPGraphPoint, LifetimeLPStats, TrendStats
+from ..client.database_client import DatabaseClient
+from ..adapter.riot_adapter import RiotAdapter
+from ..type.types import LPGraphPoint, LifetimeLPStats, TrendStats
 
 class StatCalculator:
     """Performs calculations on player and match data."""

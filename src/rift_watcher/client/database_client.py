@@ -5,9 +5,9 @@ from __future__ import annotations
 import os
 from typing import Any, Optional
 
-from supabase import Client, create_client
+from tests.supabase import Client, create_client
 
-from ..types import (
+from ..type.types import (
     InternalMatchRecord,
     InternalPlayerProfile,
 )

@@ -1,8 +1,8 @@
 """Player facade skeleton for Rift Watcher."""
 
-from .adapter.riot_adapter import RiotAdapter
-from .stat_calculator import StatCalculator
-from .types import PlayerOverview
+from ..adapter.riot_adapter import RiotAdapter
+from ..utils.stat_calculator import StatCalculator
+from ..type.types import PlayerOverview
 
 class PlayerFacade:
     """Facade to simplify player-related operations for the API layer."""

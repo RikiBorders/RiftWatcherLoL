@@ -36,7 +36,7 @@ def test_fetch_player_profile_returns_expected_profile(monkeypatch):
                 "puuid": "puuid-123",
             }, 200)
 
-        if "/lol/league/v4/entries/by-summoner/12345" in url:
+        if "/lol/league/v4/entries/by-puuid/puuid-123" in url:
             return FakeResponse([
                 {
                     "queueType": "RANKED_SOLO_5x5",
@@ -96,7 +96,7 @@ def test_fetch_player_profile_reflects_region_and_game_name_tag_line(monkeypatch
                 "puuid": "puuid-456",
             }, 200)
 
-        if "/lol/league/v4/entries/by-summoner/abcdef" in url:
+        if "/lol/league/v4/entries/by-puuid/puuid-456" in url:
             return FakeResponse([], 200)
 
         raise AssertionError(f"Unexpected URL called: {url}")
