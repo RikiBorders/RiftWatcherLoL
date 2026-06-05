@@ -40,14 +40,14 @@ class RiotAdapter:
         return {
             "player_id": raw_profile_data.get("player_id"),
             "display_name": raw_profile_data.get("display_name", "Unknown"),
-            "region": raw_profile_data.get("region", self.riot_client.region),
+            "region": raw_profile_data.get("region", self._riot_client.region),
             "rank": raw_profile_data.get("rank", "Unranked"),
             "ranked_tier": raw_profile_data.get("ranked_tier"),
             "ranked_division": raw_profile_data.get("ranked_division"),
             # Placeholder: Extend profile translation with additional Riot fields.
         }
 
-    def fetch_player_profile(self, player_id: str) -> InternalPlayerProfile:
+    def fetch_player_profile(self, summoner_name: str, region: str) -> InternalPlayerProfile:
         """Fetch and translate player profile data from Riot."""
-        raw_profile = self._riot_client.fetch_player_profile(player_id)
+        raw_profile = self._riot_client.fetch_player_profile(summoner_name, region)
         return self.translate_player_profile(raw_profile)
