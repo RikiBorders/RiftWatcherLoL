@@ -9,7 +9,7 @@ class RiftWatcherAPI:
     def __init__(self, player_facade: PlayerFacade):
         self.player_facade = player_facade
 
-    def get_player_overview(self, player_id: str) -> PlayerOverview:
+    def get_player_overview(self, game_name: str, tag_line: str, region: str) -> PlayerOverview:
         """
             Retrieve data to provide a player overview. 
             Data includes 
@@ -18,8 +18,8 @@ class RiftWatcherAPI:
             3. region
         """
         try:
-            return self.player_facade.get_player_overview(player_id)
+            return self.player_facade.get_player_overview(game_name, tag_line, region)
         except Exception as e:
             # Placeholder: Implement proper error handling and logging.
-            print(f"Error fetching player overview for {player_id}: {e}")
+            print(f"Error fetching player overview for {game_name}#{tag_line} in {region}: {e}")
             raise

@@ -1,6 +1,7 @@
 """Riot API client skeleton for Rift Watcher."""
 
 import os
+from typing import Dict
 from urllib.parse import quote
 
 import requests
@@ -24,6 +25,8 @@ class RiotAPIClient:
             "Origin": "https://developer.riotgames.com",
             "X-Riot-Token": self.api_key,
         }
+        self.headers = self.request_headers
+
         # Region mapping for Riot API endpoints
         self.regions = {
             "NA" : "na1",
@@ -37,6 +40,19 @@ class RiotAPIClient:
             "OC" : "oc1",
             "TR" : "tr1",
             "RU" : "ru"
+        }
+        self.account_regions = {
+            "NA": "americas",
+            "BR": "americas",
+            "LA1": "americas",
+            "LA2": "americas",
+            "OC": "americas",
+            "EUN": "europe",
+            "EUW": "europe",
+            "TR": "europe",
+            "RU": "europe",
+            "JP": "asia",
+            "KR": "asia",
         }
 
         # Riot ranked queues
@@ -53,66 +69,140 @@ class RiotAPIClient:
             "FOUR" : "IV"
         }
 
-    def fetch_match_history(self, player_id: str) -> list[RiotMatchData]:
-        """Fetch match history from Riot for a given player."""
-        # Placeholder: Replace with Riot API integration and response validation.
-        return [
-            {
-                "game_id": f"game_{player_id}_1",
-                "champion": "PlaceholderChampion",
-                "role": "Mid",
-                "kills": 5,
-                "deaths": 3,
-                "assists": 7,
-                "win": True,
-                "damage_share": 0.28,
-                "cs": 180,
-                "duration_minutes": 32,
-                "lp_change": 18,
-            }
-        ]
+    def fetch_player_profile(
+        self,
+        game_name: str,
+        tag_line: str,
+        region: str,
+    ):
+        account_data = self._get_account_by_riot_id(
+            game_name=game_name,
+            tag_line=tag_line,
+            region=region,
+        )
 
-    def fetch_player_profile(self, summoner_name: str, region: str) -> RiotPlayerProfile:
-        """Fetch player profile details from Riot."""
-        summoner_data = self.__get_summoner_by_name(summoner_name, region)
-        if not summoner_data or summoner_data.get("status", {}).get("status_code") == 404:
-            raise ValueError(f"Summoner {summoner_name} not found in region {region}")
+        summoner_data = self._get_summoner_by_puuid(
+            puuid=account_data["puuid"],
+            region=region,
+        )
 
-        league_entries = self.__get_league_data_by_summoner_id(summoner_data["id"], region)
-        ranked_tier = None
-        ranked_division = None
-        rank = "Unranked"
+        league_entries = self._get_league_data_by_summoner_id(
+            summoner_data["puuid"],
+            region,
+        )
 
-        if isinstance(league_entries, list) and league_entries:
-            solo_entry = next(
-                (entry for entry in league_entries if entry.get("queueType") == self.queue_types["SOLO"]),
-                None,
-            )
-            selected_entry = solo_entry or league_entries[0]
-            ranked_tier = selected_entry.get("tier")
-            ranked_division = selected_entry.get("rank")
-            if ranked_tier and ranked_division:
-                rank = f"{ranked_tier} {ranked_division}"
+        solo_queue = next(
+            (
+                entry
+                for entry in league_entries
+                if entry["queueType"] == "RANKED_SOLO_5x5"
+            ),
+            None,
+        )
+
+        flex_queue = next(
+            (
+                entry
+                for entry in league_entries
+                if entry["queueType"] == "RANKED_FLEX_SR"
+            ),
+            None,
+        )
 
         return {
-            "player_id": summoner_data.get("id"),
-            "display_name": summoner_data.get("name", summoner_name),
-            "region": region,
-            "rank": rank,
-            "ranked_tier": ranked_tier,
-            "ranked_division": ranked_division,
+            "display_name": (
+                f"{account_data['gameName']}"
+                f"#{account_data['tagLine']}"
+            ),
+            "profile_icon_id": summoner_data.get(
+                "profileIconId"
+            ),
+            "summoner_level": summoner_data.get(
+                "summonerLevel"
+            ),
+            "puuid": account_data["puuid"],
+            "solo_queue": solo_queue,
+            "flex_queue": flex_queue,
         }
+    
+    def _get_account_by_riot_id(
+        self,
+        game_name: str,
+        tag_line: str,
+        region: str,
+    ) -> Dict:
+        """
+        Riot Account-V1 lookup.
 
-    def __get_summoner_profile(self, summoner_name: str, region: str):
+        Returns:
+        {
+            "puuid": "...",
+            "gameName": "Faker",
+            "tagLine": "KR1"
+        }
+        """
+        account_region = self.account_regions[region]
+
+        url = (
+            f"https://{account_region}.api.riotgames.com"
+            f"/riot/account/v1/accounts/by-riot-id"
+            f"/{quote(game_name)}"
+            f"/{quote(tag_line)}"
+        )
+
+        response = requests.get(
+            url,
+            headers=self.headers,
+            timeout=10,
+        )
+
+        response.raise_for_status()
+
+        return response.json()
+    
+    def _get_summoner_by_puuid(
+        self,
+        puuid: str,
+        region: str
+    ) -> Dict:
+        """
+        Resolve a Riot account PUUID into a League Summoner object.
+        Returns Riot's SummonerDTO:
+        {
+            "id": "...",            # encrypted summoner id
+            "accountId": "...",
+            "puuid": "...",
+            "profileIconId": 1234,
+            "summonerLevel": 500
+        }
+        """
+        platform = self.regions[region]
+
+        url = (
+            f"https://{platform}.api.riotgames.com"
+            f"/lol/summoner/v4/summoners/by-puuid/{puuid}"
+        )
+
+        response = requests.get(
+            url,
+            headers=self.headers,
+            timeout=10,
+        )
+
+        response.raise_for_status()
+        print("Fetched Summoner by puuid:" + str(response.json()))
+        return response.json()
+
+    def _get_summoner_profile(self, summoner_name: str, region: str):
         '''
         Get a specific player's profile data (summoner level, rank, etc).
         '''
-        summoner_data = self.__get_summoner_by_name(summoner_name, region)
+        summoner_data = self._get_summoner_by_name(summoner_name, region)
         if not summoner_data:
             raise ValueError(f"Summoner {summoner_name} not found in region {region}")
         
         else:
-            account_data = self.__get_league_data_by_summoner_id(summoner_data['id'], region)
+            account_data = self._get_league_data_by_summoner_id(summoner_data['id'], region)
             parsed_account_data = self.__parse_account_data(account_data)
             parsed_account_data['profileIcon'] = summoner_data['profileIconId']
             
@@ -138,7 +228,7 @@ class RiotAPIClient:
             user_data = {'summoner_account_data': parsed_account_data}
             return {'status': 1, 'summoner_data': user_data}
 
-    def __get_summoner_by_name(self, summoner_name: str, region: str):
+    def _get_summoner_by_name(self, summoner_name: str, region: str):
         '''
         Get summoner account info via summoner name & region via the RiotAPI
         '''
@@ -158,7 +248,7 @@ class RiotAPIClient:
 
         return summoner_info.json()
 
-    def __summoner_profile_exists(self, summoner_name: str, region: str):
+    def _summoner_profile_exists(self, summoner_name: str, region: str):
         '''
         private method to check if a summoner exists
         '''
@@ -172,20 +262,21 @@ class RiotAPIClient:
         
         return summoner_data
 
-    def __get_league_data_by_summoner_id(self, summoner_id: str, region: str):
+    def _get_league_data_by_summoner_id(self, puuid: str, region: str):
         '''
         Get league of legends game info via summoner id. This will return info such as ranks for each queue, tiers, etc. via RiotAPI
         '''
-        url = f"https://{self.regions[region]}.api.riotgames.com/lol/league/v4/entries/by-summoner/{summoner_id}"
+        url = f"https://{self.regions[region]}.api.riotgames.com/lol/league/v4/entries/by-puuid/{puuid}"
         try:
             account_info = requests.get(url, headers=self.request_headers, timeout=10)
             account_info.raise_for_status()
         except requests.HTTPError as e:
-            print(f"HTTP error fetching league data for {summoner_id}: {e}")
+            print(f"HTTP error fetching league data for {puuid}: {e}")
             return []
         except requests.RequestException as e:
-            print(f"Error fetching league data for {summoner_id}: {e}")
+            print(f"Error fetching league data for {puuid}: {e}")
             return []
 
+        print("" + account_info.json())
         return account_info.json()
         

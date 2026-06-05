@@ -11,7 +11,7 @@ class PlayerFacade:
         self.riot_adapter = riot_adapter
         self.stat_calculator = stat_calculator
 
-    def get_player_overview(self, summoner_name: str, region: str) -> PlayerOverview:
+    def get_player_overview(self, game_name: str, tag_line: str, region: str) -> PlayerOverview:
         """Compile player overview data for API consumption."""
-        return self.riot_adapter.fetch_player_profile(summoner_name, region)
+        return self.riot_adapter.fetch_player_profile(game_name, tag_line, region)
 

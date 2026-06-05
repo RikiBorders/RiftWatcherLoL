@@ -18,9 +18,9 @@ class Invoker:
     def __init__(self, api: RiftWatcherAPI) -> None:
         self.api = api
 
-    def player_overview(self, summoner_name: str, region: str) -> Any:
+    def player_overview(self, game_name: str, tag_line: str, region: str) -> Any:
         """Call the player overview endpoint."""
-        return self.api.get_player_overview(summoner_name, region)
+        return self.api.get_player_overview(game_name, tag_line, region)
 
 
 riot_client = RiotAPIClient(region="NA")
@@ -29,5 +29,5 @@ player_facade = PlayerFacade(riot_adapter, stat_calculator=...)
 
 api = RiftWatcherAPI(player_facade)
 invoker = Invoker(api)
-overview = invoker.player_overview("Rik Astley", "NA")
+overview = invoker.player_overview("Rik Astley", "sasug", "NA")
 print(overview)

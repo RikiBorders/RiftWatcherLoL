@@ -47,7 +47,7 @@ class RiotAdapter:
             # Placeholder: Extend profile translation with additional Riot fields.
         }
 
-    def fetch_player_profile(self, summoner_name: str, region: str) -> InternalPlayerProfile:
+    def fetch_player_profile(self, game_name: str, tag_line: str, region: str) -> InternalPlayerProfile:
         """Fetch and translate player profile data from Riot."""
-        raw_profile = self._riot_client.fetch_player_profile(summoner_name, region)
+        raw_profile = self._riot_client.fetch_player_profile(game_name, tag_line, region)
         return self.translate_player_profile(raw_profile)
