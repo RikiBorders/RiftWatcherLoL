@@ -12,7 +12,7 @@ To run basic unit tests, just run `pytest`
 To build and run the app, execute the docker file:
 
 ```
-docker build -t rift-watcher-api .
-docker run -p 5000:5000 rift-watcher-api
+docker build -t riftwatcher:latest .
+docker run --rm -p 5000:5000 riftwatcher:latest
 ```
 
