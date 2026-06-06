@@ -242,6 +242,6 @@ class RiotAPIClient:
             print(f"Error fetching league data for {puuid}: {e}")
             return []
 
-        print("" + str(account_info.json()))
+        print("Received League Data from Riot API: " + str(account_info.json()))
         return account_info.json()
         

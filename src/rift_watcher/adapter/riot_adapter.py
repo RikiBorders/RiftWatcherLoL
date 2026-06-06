@@ -37,17 +37,37 @@ class RiotAdapter:
 
     def translate_player_profile(self, raw_profile_data: RiotPlayerProfile) -> InternalPlayerProfile:
         """Normalize raw player profile data into internal representation."""
+        solo_tier, solo_division = self._resolve_queue_rank(raw_profile_data.get("solo_queue"))
+        flex_tier, flex_division = self._resolve_queue_rank(raw_profile_data.get("flex_queue"))
+
+        solo_rank = self._format_rank_label(solo_tier, solo_division) or "Unranked"
+        flex_rank = self._format_rank_label(flex_tier, flex_division) or "Unranked"
+
         return {
             "player_id": raw_profile_data.get("player_id"),
             "display_name": raw_profile_data.get("display_name", "Unknown"),
             "region": raw_profile_data.get("region", self._riot_client.region),
-            "rank": raw_profile_data.get("rank", "Unranked"),
-            "ranked_tier": raw_profile_data.get("ranked_tier"),
-            "ranked_division": raw_profile_data.get("ranked_division"),
-            # Placeholder: Extend profile translation with additional Riot fields.
+            "rank": solo_rank,
+            "ranked_tier": solo_tier,
+            "ranked_division": solo_division,
+            "flex_rank": flex_rank,
+            "flex_ranked_tier": flex_tier,
+            "flex_ranked_division": flex_division,
         }
 
     def fetch_player_profile(self, game_name: str, tag_line: str, region: str) -> InternalPlayerProfile:
         """Fetch and translate player profile data from Riot."""
         raw_profile = self._riot_client.fetch_player_profile(game_name, tag_line, region)
         return self.translate_player_profile(raw_profile)
+    
+    def _resolve_queue_rank(self, queue_data: dict | None) -> tuple[str | None, str | None]:
+        if not queue_data:
+            return None, None
+
+        return queue_data.get("tier"), queue_data.get("rank")
+
+    def _format_rank_label(self, tier: str | None, division: str | None) -> str | None:
+        if not tier or not division:
+            return None
+
+        return f"{tier.title()} {division}"

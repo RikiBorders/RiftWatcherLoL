@@ -15,13 +15,15 @@ class RiotMatchData(TypedDict):
     duration_minutes: int
     lp_change: int
 
-class RiotPlayerProfile(TypedDict):
+class RiotPlayerProfile(TypedDict, total=False):
     player_id: str
     display_name: str
     region: str
     rank: str
     ranked_tier: str | None
     ranked_division: str | None
+    solo_queue: dict[str, Any] | None
+    flex_queue: dict[str, Any] | None
 
 class InternalMatchRecord(TypedDict):
     game_id: str | None
@@ -40,6 +42,9 @@ class InternalPlayerProfile(TypedDict):
     rank: str
     ranked_tier: str | None
     ranked_division: str | None
+    flex_rank: str | None
+    flex_ranked_tier: str | None
+    flex_ranked_division: str | None
 
 class TrendStats(TypedDict):
     games_played: int
