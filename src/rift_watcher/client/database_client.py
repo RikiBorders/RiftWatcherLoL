@@ -5,7 +5,10 @@ from __future__ import annotations
 import os
 from typing import Any, Optional
 
-from tests.supabase import Client, create_client
+try:  # prefer the real supabase package when available
+    from supabase import create_client, Client  # type: ignore
+except Exception:  # pragma: no cover - fallback for test shim
+    from tests.supabase import Client, create_client
 
 from ..type.types import (
     InternalMatchRecord,
