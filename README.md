@@ -16,3 +16,4 @@ docker build -t riftwatcher:latest .
 docker run --rm -p 5000:5000 riftwatcher:latest
 ```
 
+This project can also be deployed and managed using [homelab](https://github.com/RikiBorders/homelab)
