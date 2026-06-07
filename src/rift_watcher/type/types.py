@@ -16,7 +16,7 @@ class RiotMatchData(TypedDict):
     lp_change: int
 
 class RiotPlayerProfile(TypedDict, total=False):
-    player_id: str
+    puuid: str
     display_name: str
     region: str
     rank: str
@@ -36,14 +36,13 @@ class InternalMatchRecord(TypedDict):
     lp_change: int
 
 class InternalPlayerProfile(TypedDict):
-    player_id: str | None
+    puuid: str | None
     display_name: str
     region: str
     rank: str
     ranked_tier: str | None
     ranked_division: str | None
     flex_rank: str | None
-    flex_ranked_tier: str | None
     flex_ranked_division: str | None
 
 class TrendStats(TypedDict):

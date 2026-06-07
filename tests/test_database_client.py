@@ -92,7 +92,7 @@ def test_update_and_delete_player(monkeypatch):
 
 
 def test_player_match_performance_crud(monkeypatch):
-    perf = {"player_id": "pid", "match_id": "mid", "kills": 5}
+    perf = {"puuid": "pid", "match_id": "mid", "kills": 5}
     table = make_table_mock([perf])
     mock_client = MagicMock()
     mock_client.table.return_value = table
@@ -107,7 +107,7 @@ def test_player_match_performance_crud(monkeypatch):
     # create
     table.execute.return_value = make_response([perf])
     created = db.create_player_match_performance(
-        player_id="pid",
+        puuid="pid",
         match_id="mid",
         champion="champ",
         role="mid",

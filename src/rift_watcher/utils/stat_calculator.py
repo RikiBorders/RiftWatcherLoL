@@ -14,9 +14,9 @@ class StatCalculator:
         self.database_client = database_client
         self.riot_adapter = riot_adapter
 
-    def calculate_trends(self, player_id: str) -> TrendStats:
+    def calculate_trends(self, puuid: str) -> TrendStats:
         """Calculate long-term trends for a player."""
-        matches = self.database_client.get_player_match_history(player_id)
+        matches = self.database_client.get_player_match_history(puuid)
         if not matches:
             return {
                 "games_played": 0,
@@ -38,9 +38,9 @@ class StatCalculator:
             "trend_notes": "Placeholder: use rolling windows or regression for trend detection.",
         }
 
-    def calculate_lifetime_lp(self, player_id: str) -> LifetimeLPStats:
+    def calculate_lifetime_lp(self, puuid: str) -> LifetimeLPStats:
         """Calculate lifetime LP gain/loss over a sequence of games."""
-        matches = self.database_client.get_player_match_history(player_id)
+        matches = self.database_client.get_player_match_history(puuid)
         if not matches:
             return {
                 "total_lp_change": 0,

@@ -9,7 +9,7 @@ def test_translate_player_profile_maps_solo_and_flex_ranks():
     adapter = RiotAdapter(database_client=MagicMock(), riot_client=riot_client)
 
     raw_profile_data = {
-        "player_id": "player-123",
+        "puuid": "player-123",
         "display_name": "Rik Astley#sasug",
         "region": "NA",
         "solo_queue": {
@@ -42,14 +42,13 @@ def test_translate_player_profile_maps_solo_and_flex_ranks():
 
     profile = adapter.translate_player_profile(raw_profile_data)
 
-    assert profile["player_id"] == "player-123"
+    assert profile["puuid"] == "player-123"
     assert profile["display_name"] == "Rik Astley#sasug"
     assert profile["region"] == "NA"
     assert profile["rank"] == "Emerald II"
     assert profile["ranked_tier"] == "EMERALD"
     assert profile["ranked_division"] == "II"
     assert profile["flex_rank"] == "Gold III"
-    assert profile["flex_ranked_tier"] == "GOLD"
     assert profile["flex_ranked_division"] == "III"
 
 
@@ -69,5 +68,4 @@ def test_translate_player_profile_defaults_unranked_when_no_queues():
     assert profile["ranked_tier"] is None
     assert profile["ranked_division"] is None
     assert profile["flex_rank"] == "Unranked"
-    assert profile["flex_ranked_tier"] is None
     assert profile["flex_ranked_division"] is None

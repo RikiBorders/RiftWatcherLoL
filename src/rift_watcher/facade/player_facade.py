@@ -14,4 +14,8 @@ class PlayerFacade:
     def get_player_overview(self, game_name: str, tag_line: str, region: str) -> PlayerOverview:
         """Compile player overview data for API consumption."""
         return self.riot_adapter.fetch_player_profile(game_name, tag_line, region)
+    
+    def get_player_match_data(self, puuid: str, region: str):
+        """Fetch player match data for API consumption."""
+        return self.riot_adapter.fetch_player_match_data(puuid, region)
 

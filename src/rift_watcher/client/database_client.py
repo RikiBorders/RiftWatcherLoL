@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import os
 from typing import Any, Optional
+from dotenv import load_dotenv
+
 
 try:  # prefer the real supabase package when available
     from supabase import create_client, Client  # type: ignore
@@ -17,18 +19,20 @@ from ..type.types import (
 
 class DatabaseClient:
     """Encapsulates all Supabase database interactions."""
-    PLAYERS_TABLE = "players"
-    MATCHES_TABLE = "matches"
-    PLAYER_MATCH_PERFORMANCE_TABLE = "player_match_performance"
 
     def __init__(
         self,
         supabase_url: Optional[str] = None,
         supabase_key: Optional[str] = None,
     ) -> None:
+        load_dotenv()
+        self.PLAYERS_TABLE = "players"
+        self.MATCHES_TABLE = "matches"
+        self.PLAYER_MATCH_PERFORMANCE_TABLE = "player_match_performance"
+        
         self._client: Client = create_client(
-            supabase_url or os.environ["SUPABASE_URL"],
-            supabase_key or os.environ["SUPABASE_SERVICE_ROLE_KEY"],
+            supabase_url = os.getenv("SUPABASE_URL"),
+            supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY"),
         )
 
     @property
@@ -61,13 +65,13 @@ class DatabaseClient:
 
     def get_player_by_id(
         self,
-        player_id: str,
+        puuid: str,
     ) -> Optional[dict]:
         """Fetch a player by UUID."""
         response = (
             self._client.table(self.PLAYERS_TABLE)
             .select("*")
-            .eq("id", player_id)
+            .eq("id", puuid)
             .limit(1)
             .execute()
         )
@@ -108,7 +112,8 @@ class DatabaseClient:
         summoner_name: str,
         tagline: str,
         region: str,
-        current_rank: str | None = None,
+        current_soloduo_rank: str | None = None,
+        current_flex_rank: str | None = None,
     ) -> dict:
         """
         Create or update a player using riot_puuid
@@ -120,7 +125,8 @@ class DatabaseClient:
             "summoner_name": summoner_name,
             "tagline": tagline,
             "region": region,
-            "current_rank": current_rank,
+            "current_soloduo_rank": current_soloduo_rank,
+            "current_flex_rank": current_flex_rank,
         }
         response = (
             self._client.table(self.PLAYERS_TABLE)
@@ -191,7 +197,7 @@ class DatabaseClient:
 
     def get_player_match_performance(
         self,
-        player_id: str,
+        puuid: str,
         match_id: str,
     ) -> dict | None:
         """
@@ -201,7 +207,7 @@ class DatabaseClient:
         response = (
             self._client.table(self.PLAYER_MATCH_PERFORMANCE_TABLE)
             .select("*")
-            .eq("player_id", player_id)
+            .eq("puuid", puuid)
             .eq("match_id", match_id)
             .limit(1)
             .execute()
@@ -215,7 +221,7 @@ class DatabaseClient:
     def create_player_match_performance(
         self,
         *,
-        player_id: str,
+        puuid: str,
         match_id: str,
         champion: str,
         role: str,
@@ -231,7 +237,7 @@ class DatabaseClient:
         Insert a match performance record.
         """
         payload = {
-            "player_id": player_id,
+            "puuid": puuid,
             "match_id": match_id,
             "champion": champion,
             "role": role,
@@ -259,13 +265,13 @@ class DatabaseClient:
         """
         Upsert player match performance record.
 
-        Assumes unique(player_id, match_id).
+        Assumes unique(puuid, match_id).
         """
         response = (
             self._client.table(self.PLAYER_MATCH_PERFORMANCE_TABLE)
             .upsert(
                 payload,
-                on_conflict="player_id,match_id",
+                on_conflict="puuid,match_id",
             )
             .execute()
         )
@@ -286,7 +292,7 @@ class DatabaseClient:
             self._client.table(self.PLAYER_MATCH_PERFORMANCE_TABLE)
             .upsert(
                 records,
-                on_conflict="player_id,match_id",
+                on_conflict="puuid,match_id",
             )
             .execute()
         )
@@ -295,7 +301,7 @@ class DatabaseClient:
 
     def delete_player_match_performance(
         self,
-        player_id: str,
+        puuid: str,
         match_id: str,
     ) -> None:
         """
@@ -304,7 +310,7 @@ class DatabaseClient:
         (
             self._client.table(self.PLAYER_MATCH_PERFORMANCE_TABLE)
             .delete()
-            .eq("player_id", player_id)
+            .eq("puuid", puuid)
             .eq("match_id", match_id)
             .execute()
         )

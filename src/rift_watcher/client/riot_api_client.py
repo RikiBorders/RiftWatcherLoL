@@ -1,7 +1,8 @@
 """Riot API client skeleton for Rift Watcher."""
 
 import os
-from typing import Dict
+from typing import Dict, List
+from urllib import response
 from urllib.parse import quote
 
 import requests
@@ -13,11 +14,11 @@ from ..type.types import RiotMatchData, RiotPlayerProfile
 class RiotAPIClient:
     """Handles requests to the Riot API and validates responses."""
 
-    def __init__(self, region: str, database_client: DatabaseClient | None = None):
+    def __init__(self, region: str):
         load_dotenv()
         self.api_key = os.getenv('RIOT_API_KEY')
         self.region = region
-        self.database_client = database_client
+        self.database_client = DatabaseClient()
 
         self.request_headers = {
             "Accept-Language": "en-US,en;q=0.5",
@@ -213,6 +214,72 @@ class RiotAPIClient:
 
         return summoner_info.json()
 
+    def get_league_match_ids_by_puuid(self, puuid: str, region: str, number_of_matches: int = 20) -> list[str]:
+        url = (
+            f"https://{self.regions[region]}.api.riotgames.com"
+            f"/lol/match/v5/matches/by-puuid/{puuid}/ids"
+        )
+
+        params = {
+            "count": number_of_matches
+        }
+
+        response = requests.get(url, params=params, headers=self.request_headers, timeout=10)
+        response.raise_for_status()
+        print(f"Fetched match IDs for PUUID {puuid}: {response.json()}")
+        return response.json()
+    
+    def get_match_data_batch(self, match_ids: list[str], region: str) -> list[RiotMatchData]:
+        response = []
+        for match_id in match_ids:
+            response.append(self._get_match(match_id, region))
+
+        return response
+
+    def _get_match(self, match_id: str, region: str) -> Dict:
+        """
+        Get detailed match data.
+        """
+
+        url = (
+            f"https://{self.regions[region]}.api.riotgames.com"
+            f"/lol/match/v5/matches/{match_id}"
+        )
+
+        response = requests.get(url, headers=self.request_headers, timeout=10)
+        response.raise_for_status()
+
+        return response.json()
+
+    def get_match_ids(
+        self,
+        puuid: str,
+        count: int = 5,
+        region: str = "NA"
+    ) -> List[str]:
+        """
+        Get recent match IDs for a player.
+        """
+        url = (
+            f"https://{self.regions[region]}.api.riotgames.com"
+            f"/lol/match/v5/matches/by-puuid/{puuid}/ids"
+        )
+
+        params = {
+            "count": count
+        }
+
+        response = requests.get(
+            url,
+            headers=self.request_headers,
+            params=params,
+            timeout=10
+        )
+        response.raise_for_status()
+
+        print(f"Fetched match IDs for PUUID {puuid}: {response.json()}")
+        return response.json()
+    
     def _summoner_profile_exists(self, summoner_name: str, region: str):
         '''
         private method to check if a summoner exists
