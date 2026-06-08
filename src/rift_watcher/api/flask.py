@@ -37,7 +37,7 @@ def create_app():
         from .rift_watcher_api import RiftWatcherAPI
 
         default_region = os.getenv("RIOT_DEFAULT_REGION", "NA")
-        riot_client = RiotAPIClient(region=default_region, database_client=db_client)
+        riot_client = RiotAPIClient(region=default_region)
 
         adapter = RiotAdapter(db_client, riot_client)
         stat_calc = StatCalculator(db_client, adapter)

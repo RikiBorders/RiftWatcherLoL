@@ -30,11 +30,11 @@ def test_get_player_by_puuid_not_found(monkeypatch):
     mock_client = MagicMock()
     mock_client.table.return_value = players_table
 
-    monkeypatch.setattr(database_client, "create_client", lambda url, key: mock_client)
+    monkeypatch.setattr(database_client, "create_client", lambda *args, **kwargs: mock_client)
 
     db = database_client.DatabaseClient(supabase_url="u", supabase_key="k")
     assert db.get_player_by_puuid("nonexistent") is None
-    mock_client.table.assert_called_with(database_client.DatabaseClient.PLAYERS_TABLE)
+    mock_client.table.assert_called_with(db.PLAYERS_TABLE)
 
 
 def test_get_player_by_puuid_found(monkeypatch):
@@ -43,7 +43,7 @@ def test_get_player_by_puuid_found(monkeypatch):
     mock_client = MagicMock()
     mock_client.table.return_value = players_table
 
-    monkeypatch.setattr(database_client, "create_client", lambda url, key: mock_client)
+    monkeypatch.setattr(database_client, "create_client", lambda *args, **kwargs: mock_client)
     db = database_client.DatabaseClient(supabase_url="u", supabase_key="k")
     result = db.get_player_by_puuid("puuid")
     assert result == payload
@@ -55,7 +55,7 @@ def test_create_player_and_update(monkeypatch):
     mock_client = MagicMock()
     mock_client.table.return_value = players_table
 
-    monkeypatch.setattr(database_client, "create_client", lambda url, key: mock_client)
+    monkeypatch.setattr(database_client, "create_client", lambda *args, **kwargs: mock_client)
     db = database_client.DatabaseClient(supabase_url="u", supabase_key="k")
 
     res = db.create_player("p", "n", "t", "EUW", current_rank=None)
@@ -64,7 +64,14 @@ def test_create_player_and_update(monkeypatch):
     # upsert
     upserted = {"id": "1", "riot_puuid": "p", "current_rank": "Gold"}
     players_table.execute.return_value = make_response([upserted])
-    res2 = db.upsert_player("p", "n", "t", "EUW", current_rank="Gold")
+    res2 = db.upsert_player(
+        "p",
+        "n",
+        "t",
+        "EUW",
+        current_soloduo_rank="Gold",
+        current_flex_rank=None,
+    )
     assert res2 == upserted
 
 
@@ -74,7 +81,7 @@ def test_update_and_delete_player(monkeypatch):
     mock_client = MagicMock()
     mock_client.table.return_value = players_table
 
-    monkeypatch.setattr(database_client, "create_client", lambda url, key: mock_client)
+    monkeypatch.setattr(database_client, "create_client", lambda *args, **kwargs: mock_client)
     db = database_client.DatabaseClient(supabase_url="u", supabase_key="k")
 
     res = db.update_player_rank("p", "Platinum")
@@ -97,7 +104,7 @@ def test_player_match_performance_crud(monkeypatch):
     mock_client = MagicMock()
     mock_client.table.return_value = table
 
-    monkeypatch.setattr(database_client, "create_client", lambda url, key: mock_client)
+    monkeypatch.setattr(database_client, "create_client", lambda *args, **kwargs: mock_client)
     db = database_client.DatabaseClient(supabase_url="u", supabase_key="k")
 
     # get
@@ -146,7 +153,7 @@ def test_matches_crud(monkeypatch):
     mock_client = MagicMock()
     mock_client.table.return_value = table
 
-    monkeypatch.setattr(database_client, "create_client", lambda url, key: mock_client)
+    monkeypatch.setattr(database_client, "create_client", lambda *args, **kwargs: mock_client)
     db = database_client.DatabaseClient(supabase_url="u", supabase_key="k")
 
     assert db.get_match_by_id("mid") == m
@@ -168,7 +175,7 @@ def test_get_player_by_id_and_client_property(monkeypatch):
     mock_client = MagicMock()
     mock_client.table.return_value = players_table
 
-    monkeypatch.setattr(database_client, "create_client", lambda url, key: mock_client)
+    monkeypatch.setattr(database_client, "create_client", lambda *args, **kwargs: mock_client)
     db = database_client.DatabaseClient(supabase_url="u", supabase_key="k")
 
     # client property should expose the raw client
