@@ -102,9 +102,9 @@ class RiotAdapter:
         """
         Get recent match IDs for a player.
         """
-        match_ids = self._riot_client.get_match_ids(puuid=puuid, number_of_matches=number_of_matches, region=region)
+        match_ids = self._riot_client.get_match_ids(puuid=puuid, count=number_of_matches, region=region)
 
-        match_data = self._riot_client.get_match_data_batch(match_ids)
+        match_data = self._riot_client.get_match_data_batch(match_ids, region)
         print(f"Fetched match data for {len(match_data)} matches for PUUID {puuid}")
 
         return match_data

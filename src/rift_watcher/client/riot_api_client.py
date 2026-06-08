@@ -240,9 +240,9 @@ class RiotAPIClient:
         """
         Get detailed match data.
         """
-
+        region = self.account_regions[region]
         url = (
-            f"https://{self.regions[region]}.api.riotgames.com"
+            f"https://{region}.api.riotgames.com"
             f"/lol/match/v5/matches/{match_id}"
         )
 
@@ -260,8 +260,10 @@ class RiotAPIClient:
         """
         Get recent match IDs for a player.
         """
+
+        region = self.account_regions[region]
         url = (
-            f"https://{self.regions[region]}.api.riotgames.com"
+            f"https://{region}.api.riotgames.com"
             f"/lol/match/v5/matches/by-puuid/{puuid}/ids"
         )
 
