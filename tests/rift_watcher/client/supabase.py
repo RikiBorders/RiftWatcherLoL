@@ -10,7 +10,5 @@ class Client:  # pragma: no cover - shim for tests
     pass
 
 
-def create_client(*args, **kwargs) -> Client:  # pragma: no cover - shim
-    # Return a lightweight Client shim; tests that need to control behavior
-    # should monkeypatch `create_client` or the resulting client's methods.
-    return Client()
+def create_client(url: str, key: str) -> Client:  # pragma: no cover - shim
+    raise RuntimeError("create_client should be monkeypatched in tests or replaced with real supabase client")
