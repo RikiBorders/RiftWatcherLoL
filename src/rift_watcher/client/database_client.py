@@ -76,7 +76,7 @@ class DatabaseClient:
         if not response.data:
             return None
 
-        return response.data[0]
+        return response.data
 
     def get_player_by_id(
         self,
@@ -383,9 +383,16 @@ class DatabaseClient:
         patch_version: str,
         game_duration_seconds: int,
         started_at: str,
+        region: str | None = None,
+        game_end_timestamp: int | None = None,
+        platform_id: str | None = None,
     ) -> dict:
         """
         Create a match record.
+
+        Optional fields (`region`, `game_end_timestamp`, `platform_id`) are
+        accepted for compatibility with callers that only provide the core
+        match metadata. They default to `None` when not provided.
         """
 
         payload = {
@@ -394,6 +401,9 @@ class DatabaseClient:
             "patch_version": patch_version,
             "game_duration_seconds": game_duration_seconds,
             "started_at": started_at,
+            "region": region,
+            "game_end_timestamp": game_end_timestamp,
+            "platform_id": platform_id,
         }
 
         response = (

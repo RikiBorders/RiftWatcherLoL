@@ -1,5 +1,6 @@
 """Riot adapter skeleton for Rift Watcher."""
 
+from datetime import datetime, timezone
 from typing import List
 
 from ..client.riot_api_client import RiotAPIClient
@@ -98,6 +99,80 @@ class RiotAdapter:
 
         return match_data
         
+    def update_matches_table(self):
+        """
+        Fetch recent matches for all players and update the database.
+
+        TODO: As the number of players grows, we;'ll need to introduce caching, rate limiting, 
+        and batch processing to avoid hitting Riot API limits and to keep the database up to date without excessive load.
+        """
+        player_profiles = self.database_client.get_all_players()
+        print(player_profiles)
+        for profile in player_profiles:
+            puuid = profile.get("riot_puuid")
+            if not puuid:
+                print(f"Skipping profile with missing puuid: {profile}")
+                continue
+
+            try:
+                matches = self.get_recent_match_data(
+                    puuid, 5, profile.get("region")
+                )
+                for match in matches:
+                    fields = self._extract_match_fields(match)
+
+                    if not fields.get("riot_match_id"):
+                        print(f"Skipping match with missing matchId: {match}")
+                        continue
+
+                    self.database_client.create_match(
+                        riot_match_id=fields["riot_match_id"],
+                        queue_type=fields["queue_type"],
+                        patch_version=fields["patch_version"],
+                        game_duration_seconds=fields["game_duration_seconds"],
+                        started_at=fields["started_at"],
+                        region=profile.get("region"),
+                        game_end_timestamp=fields.get("game_end_timestamp"),
+                        platform_id=fields.get("platform_id"),
+                    )
+            except Exception as e:
+                print(f"Error getting matches for {puuid}: {e}")
+
+    def _extract_match_fields(self, match: dict) -> dict:
+        """Extract DB-ready fields from a Riot match payload.
+
+        Returns a dict suitable for `DatabaseClient.create_match`.
+        """
+        riot_match_id = (match.get("metadata", {}) or {}).get("matchId")
+        info = match.get("info", {}) or {}
+        queue_type = info.get("gameMode")
+        patch_version = info.get("gameVersion")
+        game_duration_seconds = info.get("gameDuration")
+        started_at_ts = info.get("gameStartTimestamp")
+        game_end_timestamp = info.get("gameEndTimestamp")
+        platform_id = info.get("platformId")
+        
+
+        started_at = None
+        if isinstance(started_at_ts, (int, float)):
+            try:
+                started_at = datetime.fromtimestamp(
+                    started_at_ts / 1000.0, tz=timezone.utc
+                ).isoformat()
+            except Exception:
+                started_at = None
+
+        return {
+            "riot_match_id": riot_match_id,
+            "queue_type": queue_type,
+            "patch_version": patch_version,
+            "game_duration_seconds": game_duration_seconds,
+            "started_at": started_at,
+            "game_end_timestamp": game_end_timestamp,
+            "platform_id": platform_id,
+        }
+
+    
     def _resolve_queue_rank(self, queue_data: dict | None) -> tuple[str | None, str | None]:
         if not queue_data:
             return None, None

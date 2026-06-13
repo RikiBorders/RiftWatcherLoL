@@ -26,6 +26,10 @@ class Invoker:
         """Call the player overview endpoint."""
         return self.api.get_player_overview(game_name, tag_line, region)
     
+    def update_matches(self) -> Any:
+        """Call the update_matches_table function"""
+        return self.adapter.update_matches_table()
+    
     def get_recent_match_data(self, puuid: str, region: str) -> Any:
         """Call the recent matches endpoint."""
         return self.adapter.get_recent_match_data(puuid, 1, region)
@@ -43,7 +47,9 @@ invoker = Invoker(api, riot_adapter)
 
 
 # overview = invoker.player_overview("Rik Astley", "sasug", "NA")
-player_matches = invoker.get_recent_match_data("rrIL8qCiL8DqrzvKW0opmmX0p0i-0ebdVrARDEFDGd1aZGNvIZSEE0RTzWBcJQdJdy5RXdtnZB4gYA", "NA")
+response = invoker.update_matches()
 
-print("Player Matches: " + str(player_matches))
+# player_matches = invoker.get_recent_match_data("rrIL8qCiL8DqrzvKW0opmmX0p0i-0ebdVrARDEFDGd1aZGNvIZSEE0RTzWBcJQdJdy5RXdtnZB4gYA", "NA")
+
+# print("Player Matches: " + str(player_matches))
 # print("Player Overview: " + str(overview))
