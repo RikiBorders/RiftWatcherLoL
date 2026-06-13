@@ -40,10 +40,7 @@ class InternalPlayerProfile(TypedDict):
     display_name: str
     region: str
     rank: str
-    ranked_tier: str | None
-    ranked_division: str | None
     flex_rank: str | None
-    flex_ranked_division: str | None
 
 class TrendStats(TypedDict):
     games_played: int

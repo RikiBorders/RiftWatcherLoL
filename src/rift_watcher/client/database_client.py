@@ -63,6 +63,21 @@ class DatabaseClient:
 
         return response.data[0]
 
+    def get_all_players(
+        self,
+    ) -> Optional[dict]:
+        """Fetch all players."""
+        response = (
+            self._client.table(self.PLAYERS_TABLE)
+            .select("*")
+            .execute()
+        )
+
+        if not response.data:
+            return None
+
+        return response.data[0]
+
     def get_player_by_id(
         self,
         puuid: str,

@@ -3,6 +3,7 @@
 import threading
 import time
 from collections import OrderedDict
+from datetime import datetime, timezone
 from typing import Any
 
 from ..client.riot_api_client import RiotAPIClient
@@ -30,6 +31,35 @@ class Poller:
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
 
+    def _extract_match_fields(self, match: dict) -> dict:
+        """Extract DB-ready fields from a Riot match payload.
+
+        Returns a dict suitable for `DatabaseClient.create_match`.
+        """
+        riot_match_id = (match.get("metadata", {}) or {}).get("matchId")
+        info = match.get("info", {}) or {}
+        queue_type = info.get("gameMode")
+        patch_version = info.get("gameVersion")
+        game_duration_seconds = info.get("gameDuration")
+        started_at_ts = info.get("gameStartTimestamp")
+
+        started_at = None
+        if isinstance(started_at_ts, (int, float)):
+            try:
+                started_at = datetime.fromtimestamp(
+                    started_at_ts / 1000.0, tz=timezone.utc
+                ).isoformat()
+            except Exception:
+                started_at = None
+
+        return {
+            "riot_match_id": riot_match_id,
+            "queue_type": queue_type,
+            "patch_version": patch_version,
+            "game_duration_seconds": game_duration_seconds,
+            "started_at": started_at,
+        }
+
     def start(self):
         """Begin polling for fresh data."""
         if self._thread and self._thread.is_alive():
@@ -46,47 +76,45 @@ class Poller:
 
     def _run(self):
         """Poll player match data every interval and update the database."""
-        self._load_player_cache()
         while not self._stop_event.is_set():
-            usernames = list(self._player_cache.keys())
-            for username in usernames:
-                if self._stop_event.is_set():
-                    break
-                raw_matches = self.riot_client.fetch_match_history(username)
-                processed = self.riot_adapter.translate_match_data(raw_matches)
-                for match in processed:
-                    self.database_client.upsert_match_record(username, match)
-                # Refresh cache entry after updating data
-                self._touch_cache(username)
+            player_profiles = self.database_client.fetch_all_player_profiles()
+            for profile in player_profiles:
+                puuid = profile.get("riot_puuid")
+                if not puuid:
+                    print(f"Skipping profile with missing puuid: {profile}")
+                    continue
+
+                try:
+                    matches = self.riot_adapter.get_recent_match_data(
+                        puuid, 5, profile.get("region", "NA")
+                    )
+                    for match in matches:
+                        fields = self._extract_match_fields(match)
+
+                        if not fields.get("riot_match_id"):
+                            print(f"Skipping match with missing matchId: {match}")
+                            continue
+
+                        try:
+                            self.database_client.create_match(
+                                riot_match_id=fields["riot_match_id"],
+                                queue_type=fields["queue_type"],
+                                patch_version=fields["patch_version"],
+                                game_duration_seconds=fields["game_duration_seconds"],
+                                started_at=fields["started_at"],
+                            )
+                        except TypeError:
+                            # Fallback to positional call for older signatures
+                            self.database_client.create_match(
+                                fields["riot_match_id"],
+                                fields["queue_type"],
+                                fields["patch_version"],
+                                fields["game_duration_seconds"],
+                                fields["started_at"],
+                            )
+                except Exception as e:
+                    print(f"Error getting matches for {puuid}: {e}")
+
             self._stop_event.wait(self.interval_seconds)
 
-    def _load_player_cache(self) -> None:
-        """Seed the local LRU cache from the database at startup."""
-        cached_usernames = self.database_client.fetch_all_cached_player_usernames()
-        for username in cached_usernames:
-            profile = self.database_client.get_cached_player_profile(username) or {}
-            self._player_cache[username] = profile
-            if len(self._player_cache) > self.cache_size:
-                self._player_cache.popitem(last=False)
-
-    def _touch_cache(self, username: str) -> None:
-        """Update cache ordering and ensure player is present."""
-        profile = self._player_cache.pop(username, None)
-        if profile is None:
-            profile = self.database_client.get_cached_player_profile(username) or {}
-        self._player_cache[username] = profile
-        while len(self._player_cache) > self.cache_size:
-            self._player_cache.popitem(last=False)
-
-    def get_cached_player_data(self, username: str) -> InternalPlayerProfile | None:
-        """Return cached player data or refresh from the database as needed."""
-        if username in self._player_cache:
-            self._touch_cache(username)
-            return self._player_cache[username]
-
-        profile = self.database_client.get_cached_player_profile(username)
-        if profile:
-            self._player_cache[username] = profile
-            if len(self._player_cache) > self.cache_size:
-                self._player_cache.popitem(last=False)
         return profile

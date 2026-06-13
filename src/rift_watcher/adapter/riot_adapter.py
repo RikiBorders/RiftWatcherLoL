@@ -50,10 +50,7 @@ class RiotAdapter:
             "display_name": raw_profile_data.get("display_name", "Unknown"),
             "region": raw_profile_data.get("region", self._riot_client.region),
             "rank": solo_rank,
-            "ranked_tier": solo_tier,
-            "ranked_division": solo_division,
             "flex_rank": flex_rank,
-            "flex_ranked_division": flex_division,
         }
 
     def fetch_player_profile(self, game_name: str, tag_line: str, region: str) -> InternalPlayerProfile:
@@ -90,14 +87,6 @@ class RiotAdapter:
             flex_rank or "UNRANKED",
         )
 
-    def get_recent_player_matches(self, puuid: str, number_of_matches: int) -> list[InternalMatchRecord]:
-        match_ids = self.get_match_ids( puuid=puuid, number_of_matches=number_of_matches)
-        
-        if not match_ids:
-            print(f"No matches found for PUUID: {puuid}")
-            return []
-            
-
     def get_recent_match_data(self, puuid: str, number_of_matches: int = 20, region: str = "NA") -> List[str]:
         """
         Get recent match IDs for a player.
@@ -119,4 +108,4 @@ class RiotAdapter:
         if not tier or not division:
             return None
 
-        return f"{tier.title()} {division}"
+        return f"{tier.capitalize()} {division}"
