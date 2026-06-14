@@ -1,11 +1,13 @@
 """Riot adapter skeleton for Rift Watcher."""
 
+import time
 from datetime import datetime, timezone
 from typing import List
 
 from ..client.riot_api_client import RiotAPIClient
 from ..client.database_client import DatabaseClient
 from ..type.types import InternalMatchRecord, InternalPlayerProfile, RiotMatchData, RiotPlayerProfile
+from ..constant.constant import UPDATE_PLAYER_MATCH_HISTORY_BATCH_SIZE, UPDATE_PLAYER_MATCH_HISTORY_JITTER_SECONDS
 
 class RiotAdapter:
     """Translates Riot API and database responses into internal models."""
@@ -107,7 +109,6 @@ class RiotAdapter:
         and batch processing to avoid hitting Riot API limits and to keep the database up to date without excessive load.
         """
         player_profiles = self.database_client.get_all_players()
-        print(player_profiles)
         for profile in player_profiles:
             puuid = profile.get("riot_puuid")
             if not puuid:
@@ -116,7 +117,7 @@ class RiotAdapter:
 
             try:
                 matches = self.get_recent_match_data(
-                    puuid, 5, profile.get("region")
+                    puuid, UPDATE_PLAYER_MATCH_HISTORY_BATCH_SIZE, profile.get("region")
                 )
                 for match in matches:
                     fields = self._extract_match_fields(match)
@@ -135,8 +136,12 @@ class RiotAdapter:
                         game_end_timestamp=fields.get("game_end_timestamp"),
                         platform_id=fields.get("platform_id"),
                     )
+                    time.sleep(UPDATE_PLAYER_MATCH_HISTORY_JITTER_SECONDS)
+
             except Exception as e:
                 print(f"Error getting matches for {puuid}: {e}")
+
+            time.sleep(UPDATE_PLAYER_MATCH_HISTORY_JITTER_SECONDS)
 
     def _extract_match_fields(self, match: dict) -> dict:
         """Extract DB-ready fields from a Riot match payload.

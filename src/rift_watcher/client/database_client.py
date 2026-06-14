@@ -390,10 +390,17 @@ class DatabaseClient:
         """
         Create a match record.
 
+        If a match with `riot_match_id` already exists, return the existing
+        match record instead of inserting a duplicate.
+
         Optional fields (`region`, `game_end_timestamp`, `platform_id`) are
         accepted for compatibility with callers that only provide the core
-        match metadata. They default to `None` when not provided.
+        match metadata.
         """
+
+        existing_match = self.get_match_by_riot_match_id(riot_match_id)
+        if existing_match is not None:
+            return existing_match
 
         payload = {
             "riot_match_id": riot_match_id,

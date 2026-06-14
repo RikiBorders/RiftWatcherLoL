@@ -19,7 +19,7 @@ class Poller:
         riot_client: RiotAPIClient,
         riot_adapter: RiotAdapter,
         database_client: DatabaseClient,
-        interval_seconds: int = 7200,
+        interval_seconds: int = 1800,
         cache_size: int = 128,
     ):
         self.riot_client = riot_client

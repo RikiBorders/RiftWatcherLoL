@@ -1,13 +1,15 @@
 from flask import Flask, request, jsonify
 import os
 import logging
+import atexit
 
 
 def create_app():
     """Application factory that initializes dependencies at process startup.
 
     This keeps top-level imports light while still constructing clients
-    once when the WSGI server calls the factory.
+    once when the WSGI server calls the factory. Also initializes and
+    manages the background Poller for periodic data refresh.
     """
     app = Flask(__name__)
     logger = logging.getLogger(__name__)
@@ -44,11 +46,43 @@ def create_app():
         facade = PlayerFacade(adapter, stat_calc)
         api = RiftWatcherAPI(facade)
 
+        # Initialize Poller if database client is available
+        poller = None
+        if db_client:
+            try:
+                from ..poller.poller import Poller
+                poller = Poller(
+                    riot_client=riot_client,
+                    riot_adapter=adapter,
+                    database_client=db_client,
+                    interval_seconds=int(os.getenv("POLLER_INTERVAL_SECONDS", "7200")),
+                )
+                poller.start()
+                logger.info("Poller started successfully")
+            except Exception:
+                logger.exception("Failed to initialize Poller at startup")
+                poller = None
+        else:
+            logger.info("Poller not initialized: DatabaseClient not available")
+            poller = None
+
     except Exception:
         logger.exception("Failed to initialize app dependencies at startup")
         api = None
+        poller = None
 
     app.config["API"] = api
+    app.config["POLLER"] = poller
+
+    # Register shutdown handler to gracefully stop the poller
+    def shutdown_poller():
+        poller = app.config.get("POLLER")
+        if poller:
+            logger.info("Stopping Poller...")
+            poller.stop()
+            logger.info("Poller stopped")
+
+    atexit.register(shutdown_poller)
 
     @app.route("/player/overview", methods=["GET"])
     def player_overview():

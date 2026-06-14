@@ -168,6 +168,22 @@ def test_matches_crud(monkeypatch):
     assert up == m
 
 
+def test_create_match_returns_existing_match_if_present(monkeypatch):
+    existing = {"id": "mid", "riot_match_id": "rmid"}
+    table = make_table_mock([existing])
+    # match_exists / get_match_by_riot_match_id returns existing match
+    table.execute.return_value = make_response([existing])
+    mock_client = MagicMock()
+    mock_client.table.return_value = table
+
+    monkeypatch.setattr(database_client, "create_client", lambda *args, **kwargs: mock_client)
+    db = database_client.DatabaseClient(supabase_url="u", supabase_key="k")
+
+    result = db.create_match("rmid", "SR", "13.10", 1800, "2026-05-31T12:00:00Z")
+    assert result == existing
+    table.insert.assert_not_called()
+
+
 def test_get_player_by_id_and_client_property(monkeypatch):
     # verify get_player_by_id behavior
     payload = {"id": "player-1", "riot_puuid": "puuid"}
