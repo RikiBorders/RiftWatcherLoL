@@ -52,9 +52,7 @@ def create_app():
             try:
                 from ..poller.poller import Poller
                 poller = Poller(
-                    riot_client=riot_client,
                     riot_adapter=adapter,
-                    database_client=db_client,
                     interval_seconds=int(os.getenv("POLLER_INTERVAL_SECONDS", "7200")),
                 )
                 poller.start()

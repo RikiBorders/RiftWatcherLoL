@@ -6,28 +6,25 @@ from collections import OrderedDict
 from datetime import datetime, timezone
 from typing import Any
 
+from flask import logging
+
 from ..client.riot_api_client import RiotAPIClient
 from ..client.database_client import DatabaseClient
 from ..adapter.riot_adapter import RiotAdapter
 from ..type.types import InternalPlayerProfile
+
+logger = logging.getLogger(__name__)
 
 class Poller:
     """Regularly polls the Riot API and updates stored player data."""
 
     def __init__(
         self,
-        riot_client: RiotAPIClient,
         riot_adapter: RiotAdapter,
-        database_client: DatabaseClient,
         interval_seconds: int = 1800,
-        cache_size: int = 128,
     ):
-        self.riot_client = riot_client
         self.riot_adapter = riot_adapter
-        self.database_client = database_client
         self.interval_seconds = interval_seconds
-        self.cache_size = cache_size
-        self._player_cache: OrderedDict[str, dict[str, Any]] = OrderedDict()
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
 
@@ -49,4 +46,5 @@ class Poller:
         """Poll player match data every interval and update the database."""
         while not self._stop_event.is_set():
             self.riot_adapter.update_matches_table()
+            logger.info("Poller: Completed update_matches_table at %s", datetime.now(timezone.utc).isoformat())
             self._stop_event.wait(self.interval_seconds)
