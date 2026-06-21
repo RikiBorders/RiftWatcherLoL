@@ -126,16 +126,21 @@ class RiotAdapter:
                         print(f"Skipping match with missing matchId: {match}")
                         continue
 
-                    self.database_client.create_match(
-                        riot_match_id=fields["riot_match_id"],
-                        queue_type=fields["queue_type"],
-                        patch_version=fields["patch_version"],
-                        game_duration_seconds=fields["game_duration_seconds"],
-                        started_at=fields["started_at"],
-                        region=profile.get("region"),
-                        game_end_timestamp=fields.get("game_end_timestamp"),
-                        platform_id=fields.get("platform_id"),
-                    )
+                    # Use upsert to avoid race conditions that can create
+                    # duplicate match rows when multiple players reference
+                    # the same Riot match concurrently.
+                    payload = {
+                        "riot_match_id": fields["riot_match_id"],
+                        "queue_type": fields["queue_type"],
+                        "patch_version": fields["patch_version"],
+                        "game_duration_seconds": fields["game_duration_seconds"],
+                        "started_at": fields["started_at"],
+                        "region": profile.get("region"),
+                        "game_end_timestamp": fields.get("game_end_timestamp"),
+                        "platform_id": fields.get("platform_id"),
+                    }
+
+                    self.database_client.upsert_match(payload=payload)
                     time.sleep(UPDATE_PLAYER_MATCH_HISTORY_JITTER_SECONDS)
 
             except Exception as e:

@@ -36,4 +36,4 @@ docker run --rm -p 5000:5000 riftwatcher:latest
 
 ## Contributor notes
 
-This repository is actively evolving toward a production-quality analytics platform, and we welcome serious contributors interested in ownership of backend, data, and API slices. See [CONTRIBUTE.md](./CONTRIBUTE.md) for contribution guidelines and ownership pathways.
+This repository is actively evolving toward a production-quality analytics platform, and we welcome serious contributors interested in ownership of backend, data, and API slices. See [CONTRIBUTE.md](./CONTRIBUTING.md) for contribution guidelines and ownership pathways.

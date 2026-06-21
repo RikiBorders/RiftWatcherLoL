@@ -1,12 +1,12 @@
 """Poller skeleton for periodic data refresh."""
 
 import threading
+import logging
 import time
 from collections import OrderedDict
 from datetime import datetime, timezone
 from typing import Any
 
-from flask import logging
 
 from ..client.riot_api_client import RiotAPIClient
 from ..client.database_client import DatabaseClient
