@@ -63,6 +63,27 @@ class DatabaseClient:
 
         return response.data[0]
 
+    def get_player_puuid_by_game_name(
+            self,
+            game_name: str,
+            tag_line: str, 
+            region: str
+    ):
+        """Fetch all players."""
+        response = (
+            self._client.table(self.PLAYERS_TABLE)
+            .select("*")
+            .eq("region", region)
+            .eq("tagline", tag_line)
+            .eq("summoner_name", game_name)
+            .execute()
+        )
+
+        if not response.data:
+            return None
+
+        return response.data
+
     def get_all_players(
         self,
     ) -> Optional[dict]:
@@ -224,6 +245,27 @@ class DatabaseClient:
             .select("*")
             .eq("puuid", puuid)
             .eq("match_id", match_id)
+            .limit(1)
+            .execute()
+        )
+
+        if not response.data:
+            return None
+
+        return response.data[0]
+    
+    def get_player_match_performances(
+        self,
+        puuid: str,
+    ) -> list[dict] | None:
+        """
+        Get a player's stats for a specific match.
+        """
+
+        response = (
+            self._client.table(self.PLAYER_MATCH_PERFORMANCE_TABLE)
+            .select("*")
+            .eq("puuid", puuid)
             .limit(1)
             .execute()
         )

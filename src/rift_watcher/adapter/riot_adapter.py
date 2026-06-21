@@ -6,7 +6,12 @@ from typing import List
 
 from ..client.riot_api_client import RiotAPIClient
 from ..client.database_client import DatabaseClient
-from ..type.types import InternalMatchRecord, InternalPlayerProfile, RiotMatchData, RiotPlayerProfile
+from ..type.types import \
+    InternalMatchRecord, \
+    InternalPlayerProfile, \
+    RiotMatchData, \
+    RiotPlayerProfile, \
+    InternalPlayerMatchPerformanceRecord
 from ..constant.constant import UPDATE_PLAYER_MATCH_HISTORY_BATCH_SIZE, UPDATE_PLAYER_MATCH_HISTORY_JITTER_SECONDS
 
 class RiotAdapter:
@@ -65,31 +70,6 @@ class RiotAdapter:
 
         return translated_profile
     
-    def _upsert_player_profile(
-        self,
-        translated_profile: InternalPlayerProfile,
-        game_name: str,
-        tag_line: str,
-        region: str,
-    ) -> None:
-        """Persist player metadata in the database, using UNRANKED when needed.
-
-        This is a no-op when the adapter was created without a database client.
-        """
-        solo_rank = translated_profile.get("rank")
-        flex_rank = translated_profile.get("flex_rank")
-
-        print(f"Upserting player profile for {translated_profile['display_name']} with puuid {translated_profile['puuid']} and solo rank {solo_rank} and flex rank {flex_rank}")
-
-        self.database_client.upsert_player(
-            translated_profile.get("puuid"),
-            game_name,
-            tag_line,
-            region,
-            solo_rank or "UNRANKED",
-            flex_rank or "UNRANKED",
-        )
-
     def get_recent_match_data(self, puuid: str, number_of_matches: int = 20, region: str = "NA") -> List[str]:
         """
         Get recent match IDs for a player.
@@ -148,6 +128,17 @@ class RiotAdapter:
 
             time.sleep(UPDATE_PLAYER_MATCH_HISTORY_JITTER_SECONDS)
 
+    def update_player_match_performance_table_with_match_data(self, match_data: InternalPlayerMatchPerformanceRecord):
+        self.database_client.upsert_player_match_performance(match_data)
+
+    def get_player_match_performances_by_game_name(self, game_name: str, tag_line: str, region: str) -> InternalPlayerMatchPerformanceRecord:
+        """Query the internal database to get performance data. A Riot API call is not made here."""
+        puuid = self.database_client.get_player_puuid_by_game_name(game_name, tag_line, region)
+        return self.get_player_match_performances_by_puuid(puuid)
+
+    def get_player_match_performances_by_puuid(self, puuid: str) -> InternalPlayerMatchPerformanceRecord:
+        return self.database_client.get_player_match_performances(puuid)
+
     def _extract_match_fields(self, match: dict) -> dict:
         """Extract DB-ready fields from a Riot match payload.
 
@@ -181,13 +172,37 @@ class RiotAdapter:
             "game_end_timestamp": game_end_timestamp,
             "platform_id": platform_id,
         }
-
     
     def _resolve_queue_rank(self, queue_data: dict | None) -> tuple[str | None, str | None]:
         if not queue_data:
             return None, None
 
         return queue_data.get("tier"), queue_data.get("rank")
+
+    def _upsert_player_profile(
+        self,
+        translated_profile: InternalPlayerProfile,
+        game_name: str,
+        tag_line: str,
+        region: str,
+    ) -> None:
+        """Persist player metadata in the database, using UNRANKED when needed.
+
+        This is a no-op when the adapter was created without a database client.
+        """
+        solo_rank = translated_profile.get("rank")
+        flex_rank = translated_profile.get("flex_rank")
+
+        print(f"Upserting player profile for {translated_profile['display_name']} with puuid {translated_profile['puuid']} and solo rank {solo_rank} and flex rank {flex_rank}")
+
+        self.database_client.upsert_player(
+            translated_profile.get("puuid"),
+            game_name,
+            tag_line,
+            region,
+            solo_rank or "UNRANKED",
+            flex_rank or "UNRANKED",
+        )
 
     def _format_rank_label(self, tier: str | None, division: str | None) -> str | None:
         if not tier or not division:

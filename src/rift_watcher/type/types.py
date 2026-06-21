@@ -35,6 +35,19 @@ class InternalMatchRecord(TypedDict):
     cs_per_min: float
     lp_change: int
 
+class InternalPlayerMatchPerformanceRecord(TypedDict):
+    game_id: str | None
+    puuid: int
+    champion: str
+    lp_change: int
+    role: str
+    kills: float
+    deaths: float
+    assists: float
+    win: bool
+    total_damage_dealt: float
+    total_lane_minions_killed: int
+
 class InternalPlayerProfile(TypedDict):
     puuid: str | None
     display_name: str
