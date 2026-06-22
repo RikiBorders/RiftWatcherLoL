@@ -333,27 +333,6 @@ class DatabaseClient:
 
         return response.data[0]
 
-    def bulk_upsert_player_match_performance(
-        self,
-        records: list[InternalPlayerMatchPerformanceRecord],
-    ) -> list[dict]:
-        """
-        Bulk ingest player match performance records.
-        """
-        if not records:
-            return []
-
-        response = (
-            self._client.table(self.PLAYER_MATCH_PERFORMANCE_TABLE)
-            .upsert(
-                records,
-                on_conflict="puuid,match_id",
-            )
-            .execute()
-        )
-
-        return response.data
-
     def delete_player_match_performance(
         self,
         puuid: str,
