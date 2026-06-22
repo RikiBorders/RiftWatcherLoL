@@ -44,6 +44,10 @@ class Invoker:
     def player_match_performances(self, puuid: str) -> Any:
         """Query player match performance records by PUUID."""
         return self.adapter.get_player_match_performances_by_puuid(puuid)
+    
+    def update_player_match_performances(self, puuid: str, count: int, region: str) -> Any:
+        """Query player match performance records by PUUID."""
+        matches = self.adapter.get_recent_match_data(puuid, count, region)
 
 
 def build_invoker(

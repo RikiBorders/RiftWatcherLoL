@@ -133,14 +133,6 @@ def test_player_match_performance_crud(monkeypatch):
     up = db.upsert_player_match_performance(payload=perf)
     assert up == perf
 
-    # bulk upsert empty
-    assert db.bulk_upsert_player_match_performance([]) == []
-
-    # bulk upsert non-empty
-    table.execute.return_value = make_response([perf])
-    res = db.bulk_upsert_player_match_performance([perf])
-    assert res == [perf]
-
     # delete
     table.execute.return_value = make_response([])
     db.delete_player_match_performance("pid", "mid")

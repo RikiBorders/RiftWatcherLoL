@@ -100,6 +100,7 @@ class RiotAdapter:
                     puuid, UPDATE_PLAYER_MATCH_HISTORY_BATCH_SIZE, profile.get("region")
                 )
                 for match in matches:
+                    self.update_player_match_performance_table_with_match_data(match, puuid)
                     fields = self._extract_match_fields(match)
 
                     if not fields.get("riot_match_id"):
@@ -128,8 +129,10 @@ class RiotAdapter:
 
             time.sleep(UPDATE_PLAYER_MATCH_HISTORY_JITTER_SECONDS)
 
-    def update_player_match_performance_table_with_match_data(self, match_data: InternalPlayerMatchPerformanceRecord):
-        self.database_client.upsert_player_match_performance(match_data)
+    def update_player_match_performance_table_with_match_data(self, match_data, puuid: str):
+        payload = self._extract_player_match_performance(match_data, puuid)
+        if payload:
+            self.database_client.upsert_player_match_performance(payload)
 
     def get_player_match_performances_by_game_name(self, game_name: str, tag_line: str, region: str) -> InternalPlayerMatchPerformanceRecord:
         """Query the internal database to get performance data. A Riot API call is not made here."""
@@ -138,6 +141,50 @@ class RiotAdapter:
 
     def get_player_match_performances_by_puuid(self, puuid: str) -> InternalPlayerMatchPerformanceRecord:
         return self.database_client.get_player_match_performances(puuid)
+
+    def _extract_player_match_performance(self, match: dict, player_puuid: str) -> dict | None:
+        """Extract a specific player's performance metrics from a match.
+        
+        Finds the participant with the given puuid and returns their performance data
+        combined with match-level metadata.
+        
+        Returns None if the player is not found in the match.
+        """
+        # Extract match-level info
+        riot_match_id = (match.get("metadata", {}) or {}).get("matchId")
+        info = match.get("info", {}) or {}
+        
+        # Find the participant with matching puuid
+        participants = info.get("participants", [])
+        player_participant = None
+        for participant in participants:
+            if participant.get("puuid") == player_puuid:
+                player_participant = participant
+                break
+        
+        if not player_participant:
+            print(f"Player with puuid {player_puuid} not found in match {riot_match_id}")
+            return None
+        
+        # Extract player performance stats
+        payload = {
+            "match_id": riot_match_id,
+            "puuid": player_puuid,
+            "champion_id": player_participant.get("championId"),
+            "champion_name": player_participant.get("championName"),
+            "kills": player_participant.get("kills", 0),
+            "deaths": player_participant.get("deaths", 0),
+            "assists": player_participant.get("assists", 0),
+            "gold_earned": player_participant.get("goldEarned", 0),
+            "total_damage_dealt": player_participant.get("totalDamageDealt", 0),
+            "total_damage_dealt_to_champions": player_participant.get("totalDamageDealtToChampions", 0),
+            "total_minions_killed": player_participant.get("totalMinionsKilled", 0),
+            "role": player_participant.get("individualPosition", player_participant.get("role")),
+            "team_id": player_participant.get("teamId"),
+            "win": player_participant.get("win", False),
+        }
+        
+        return payload
 
     def _extract_match_fields(self, match: dict) -> dict:
         """Extract DB-ready fields from a Riot match payload.

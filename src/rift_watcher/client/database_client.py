@@ -13,8 +13,7 @@ except Exception:  # pragma: no cover - fallback for test shim
     from tests.supabase import Client, create_client
 
 from ..type.types import (
-    InternalMatchRecord,
-    InternalPlayerProfile,
+    InternalPlayerMatchPerformanceRecord
 )
 
 class DatabaseClient:
@@ -317,7 +316,7 @@ class DatabaseClient:
 
     def upsert_player_match_performance(
         self,
-        payload: dict,
+        payload: InternalPlayerMatchPerformanceRecord,
     ) -> dict:
         """
         Upsert player match performance record.
@@ -327,8 +326,7 @@ class DatabaseClient:
         response = (
             self._client.table(self.PLAYER_MATCH_PERFORMANCE_TABLE)
             .upsert(
-                payload,
-                on_conflict="puuid,match_id",
+                payload
             )
             .execute()
         )
@@ -337,7 +335,7 @@ class DatabaseClient:
 
     def bulk_upsert_player_match_performance(
         self,
-        records: list[dict],
+        records: list[InternalPlayerMatchPerformanceRecord],
     ) -> list[dict]:
         """
         Bulk ingest player match performance records.
