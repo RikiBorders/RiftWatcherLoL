@@ -160,6 +160,7 @@ class RiotAdapter:
         for participant in participants:
             if participant.get("puuid") == player_puuid:
                 player_participant = participant
+                player_challenges = player_participant.get("challenges")
                 break
         
         if not player_participant:
@@ -175,12 +176,20 @@ class RiotAdapter:
             "champion_experience": player_participant.get("champExperience"),
             "kills": player_participant.get("kills", 0),
             "deaths": player_participant.get("deaths", 0),
+            "total_time_spent_dead": player_participant.get("totalTimeSpentDead", 0),
             "assists": player_participant.get("assists", 0),
             "gold_earned": player_participant.get("goldEarned", 0),
             "total_damage_dealt": player_participant.get("totalDamageDealt", 0),
             "total_damage_dealt_to_objectives": player_participant.get("damageDealtToObjectives"),
             "total_damage_dealt_to_champions": player_participant.get("totalDamageDealtToChampions", 0),
             "total_minions_killed": player_participant.get("totalMinionsKilled", 0),
+            "lane_minions_first_10_minutes": player_challenges.get("laneMinionsFirst10Minutes", 0),
+            "jungle_cs_before_10_minutes": player_challenges.get("jungleCsBefore10Minutes", 0),
+            "max_cs_advantage_on_lane_opponent": player_challenges.get("maxCsAdvantageOnLaneOpponent", 0),
+            "max_level_lead_on_lane_opponent": player_challenges.get("maxLevelLeadLaneOpponent", 0),
+            "max_kill_defecit": player_challenges.get("maxKillDeficit", 0),
+            "turret_plates_taken": player_challenges.get("turretPlatesTaken", 0),
+            "turret_takedowns": player_challenges.get("turretTakedowns", 0),
             "role": player_participant.get("individualPosition", player_participant.get("role")),
             "team_id": player_participant.get("teamId"),
             "vision_score": player_participant.get("visionScore"),

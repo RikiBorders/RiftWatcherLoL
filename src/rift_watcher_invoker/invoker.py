@@ -49,6 +49,10 @@ class Invoker:
         """Query player match performance records by PUUID."""
         matches = self.adapter.get_recent_match_data(puuid, count, region)
 
+    def extract_player_match_performance(self, puuid: str, region: str):
+        match = self.adapter.get_recent_match_data(puuid, 1, region)[0]
+        return self.adapter._extract_player_match_performance(match, puuid)
+
 
 def build_invoker(
     region: str | None = None,
@@ -129,6 +133,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     performances.add_argument("--puuid", required=True, help="Player PUUID.")
 
+    recent_performances = subparsers.add_parser(
+        "extract-player-match-performance",
+        help="Query recent player match performance data by PUUID.",
+    )
+    recent_performances.add_argument("--puuid", required=True, help="Player PUUID.")
+    recent_performances.add_argument("--region", required=True, help="Region")
+
     return parser.parse_args(argv)
 
 
@@ -148,6 +159,7 @@ def select_command() -> str | None:
         "update-matches",
         "recent-matches",
         "player-performances",
+        "extract-player-match-performance",
         "quit",
     ]
 
@@ -213,6 +225,12 @@ def interactive_mode(region: str, supabase_url: str | None, supabase_key: str | 
         puuid = ask_non_empty("Player PUUID: ")
         print_json(invoker.player_match_performances(puuid))
         return 0
+    
+    if command == "extract-player-match-performance":
+        puuid = ask_non_empty("Player PUUID: ")
+        region = ask_non_empty("Region: ")
+        print_json(invoker.extract_player_match_performance(puuid=puuid, region=region))
+        return 0
 
     logger.error("Interactive command resolution failed for %s", command)
     return 1
@@ -263,6 +281,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "player-performances":
         response = invoker.player_match_performances(args.puuid)
+        print_json(response)
+        return 0
+    
+    if args.command == "extract-player-match-performance":
+        response = invoker.extract_player_match_performance(args.puuid, args.region)
         print_json(response)
         return 0
 
